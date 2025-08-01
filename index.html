@@ -130,6 +130,7 @@
                         <span>${u.name}</span>
                         <span>${u.arrival}</span>
                         <span>${u.birth}</span>
+                        <span style="color:#000; font-weight:500;">${u.message || ''}</span>
                     </div>`
                 ).join('');
             }
@@ -154,7 +155,17 @@
         </script>
     </main>
     <footer>
-        &copy; 2025 Kultmass. Всі права захищені.
+        &copy; 2025 Kultmass. Всі права захищені.<br>
+        <button id="clearDbBtn" class="btn" style="margin-top:16px;">Очистити базу даних</button>
     </footer>
+    <script>
+        document.getElementById('clearDbBtn').addEventListener('click', async function() {
+            if (confirm('Ви впевнені, що хочете очистити базу даних?')) {
+                await fetch('/api/clear', { method: 'POST' });
+                userIdInput.value = 1; // Скидаємо лічильник на фронті
+                fetchUsers();
+            }
+        });
+    </script>
 </body>
 </html>

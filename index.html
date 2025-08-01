@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kultmass — Головна</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Montserrat', Arial, sans-serif;
+            /* background: linear-gradient(120deg, #f8fafc 0%, #e0e7ff 100%); */
+            background: #fff; /* Білий фон без панелі */
+            color: #050505;
+        }
+        header {
+            background: #000; /* Змінено на чорний */
+            color: #fff;
+            padding: 32px 0 24px 0;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(79,70,229,0.08);
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        main {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(79,70,229,0.08);
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        main h2 {
+            font-size: 1.5rem;
+            margin-top: 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 32px;
+            background: #4f46e5;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            text-decoration: none;
+            margin-top: 24px;
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background: #3730a3;
+        }
+        footer {
+            text-align: center;
+            padding: 24px 0;
+            color: #6b7280;
+            font-size: 0.95rem;
+        }
+        form {
+            display: flex;
+            gap: 16px;
+            margin-top: 32px;
+            align-items: center;
+        }
+        form div {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #userList {
+            margin-top: 24px;
+            width: 100%;
+        }
+        #userList div {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 8px;
+            padding: 8px;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Kultmass</h1>
+    </header>
+    <main>
+        <!-- <h2>Ласкаво просимо!</h2>
+        <p>Тут ви знайдете найкращі події, новини та можливості для розвитку культури у вашому місті.</p>
+        <a href="#" class="btn">Дізнатися більше</a> -->
+        <form id="userForm">
+            <div>
+                <label for="userId" style="font-size: 1rem; color: #000; font-weight: 500; margin-bottom: 0;">№</label>
+                <input type="number" id="userId" name="userId" placeholder="№" min="1" readonly style="width: 60px; padding: 8px;">
+            </div>
+            <div>
+                <label for="userName" style="font-size: 1rem; color: #000; font-weight: 500; margin-bottom: 0;">Ім'я користувача</label>
+                <input type="text" id="userName" name="userName" placeholder="Ім'я користувача" required style="padding: 8px;">
+            </div>
+            <div>
+                <label for="arrivalDate" style="font-size: 1rem; color: #000; font-weight: 500; margin-bottom: 0;">Дата прибуття</label>
+                <input type="date" id="arrivalDate" name="arrivalDate" required style="padding: 8px;">
+            </div>
+            <div>
+                <label for="birthDate" style="font-size: 1rem; color: #000; font-weight: 500; margin-bottom: 0;">Дата народження</label>
+                <input type="date" id="birthDate" name="birthDate" required style="padding: 8px;">
+            </div>
+            <button type="submit" class="btn" style="margin-top: 0;">Додати</button>
+        </form>
+        <div id="userList"></div>
+        <script>
+            const form = document.getElementById('userForm');
+            const userIdInput = document.getElementById('userId');
+            const userList = document.getElementById('userList');
+
+            async function fetchUsers() {
+                const res = await fetch('/api/users');
+                const users = await res.json();
+                userIdInput.value = users.length + 1;
+                userList.innerHTML = users.map(u =>
+                    `<div>
+                        <span>№${u.id}</span>
+                        <span>${u.name}</span>
+                        <span>${u.arrival}</span>
+                        <span>${u.birth}</span>
+                    </div>`
+                ).join('');
+            }
+
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const user = {
+                    name: form.userName.value,
+                    arrival: form.arrivalDate.value,
+                    birth: form.birthDate.value
+                };
+                await fetch('/api/users', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(user)
+                });
+                form.reset();
+                fetchUsers();
+            });
+
+            fetchUsers();
+        </script>
+    </main>
+    <footer>
+        &copy; 2025 Kultmass. Всі права захищені.
+    </footer>
+</body>
+</html>

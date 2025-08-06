@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kultmass — Головна</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/locales/uk.global.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -115,57 +118,110 @@
             <button type="submit" class="btn" style="margin-top: 0;">Додати</button>
         </form>
         <div id="userList"></div>
-        <script>
-            const form = document.getElementById('userForm');
-            const userIdInput = document.getElementById('userId');
-            const userList = document.getElementById('userList');
-
-            async function fetchUsers() {
-                const res = await fetch('/api/users');
-                const users = await res.json();
-                userIdInput.value = users.length + 1;
-                userList.innerHTML = users.map(u =>
-                    `<div>
-                        <span>№${u.id}</span>
-                        <span>${u.name}</span>
-                        <span>${u.arrival}</span>
-                        <span>${u.birth}</span>
-                        <span style="color:#000; font-weight:500;">${u.message || ''}</span>
-                    </div>`
-                ).join('');
-            }
-
-            form.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const user = {
-                    name: form.userName.value,
-                    arrival: form.arrivalDate.value,
-                    birth: form.birthDate.value
-                };
-                await fetch('/api/users', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(user)
-                });
-                form.reset();
-                fetchUsers();
-            });
-
-            fetchUsers();
-        </script>
-    </main>
+        <div id="calendar" style="margin-top:40px; max-width: 600px;"></div>
+        </main>
+        
+    
     <footer>
-        &copy; 2025 Kultmass. Всі права захищені.<br>
-        <button id="clearDbBtn" class="btn" style="margin-top:16px;">Очистити базу даних</button>
+        <button id="clearDbBtn" class="btn" style="margin-top:16px;">Очистити базу даних</button><br>
+        <p>&copy; 2025 Kultmass. Всі права захищені.<br></p>
     </footer>
     <script>
+        // Весь ваш JS-код тут!
+        const form = document.getElementById('userForm');
+        const userIdInput = document.getElementById('userId');
+        const userList = document.getElementById('userList');
+
+        async function fetchUsers() {
+            const res = await fetch('/api/users');
+            const users = await res.json();
+            userIdInput.value = users.length + 1;
+            userList.innerHTML = users.map(u =>
+                `<div>
+                    <span>№${u.id}</span>
+                    <span>${u.name}</span>
+                    <span>${u.arrival}</span>
+                    <span>${u.birth}</span>
+                    <span style="color:#000; font-weight:500;">${u.message || ''}</span>
+                </div>`
+            ).join('');
+            renderCalendar(users);
+        }
+
+        function renderCalendar(users) {
+            const calendarEl = document.getElementById('calendar');
+            if (!calendarEl) return;
+
+            const events = [];
+            users.forEach(u => {
+                if (u.birth) {
+                    const birthDate = new Date(u.birth);
+                    const now = new Date();
+                    let eventDate = new Date(now.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+                    if (eventDate < now) eventDate.setFullYear(now.getFullYear() + 1);
+                    events.push({
+                        title: `ДН: ${u.name}`,
+                        start: eventDate.toISOString().slice(0,10),
+                        color: '#f59e42'
+                    });
+                }
+                if (u.arrival) {
+                    const arrivalDate = new Date(u.arrival);
+                    const now = new Date();
+                    let months = ((now.getFullYear() - arrivalDate.getFullYear()) * 12) + (now.getMonth() - arrivalDate.getMonth());
+                    for (let i = 1; i <= months + 2; i++) {
+                        let jubDate = new Date(arrivalDate);
+                        jubDate.setMonth(jubDate.getMonth() + i);
+                        if (jubDate >= now) {
+                            events.push({
+                                title: `${i}-й місяць: ${u.name}`,
+                                start: jubDate.toISOString().slice(0,10),
+                                color: '#60a5fa'
+                            });
+                        }
+                    }
+                }
+            });
+
+            if (calendarEl._calendar) {
+                calendarEl._calendar.destroy();
+            }
+
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'uk',
+                height: 500,
+                events: events
+            });
+            calendar.render();
+            calendarEl._calendar = calendar;
+        }
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const user = {
+                name: form.userName.value,
+                arrival: form.arrivalDate.value,
+                birth: form.birthDate.value
+            };
+            await fetch('/api/users', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(user)
+            });
+            form.reset();
+            fetchUsers();
+        });
+
         document.getElementById('clearDbBtn').addEventListener('click', async function() {
             if (confirm('Ви впевнені, що хочете очистити базу даних?')) {
                 await fetch('/api/clear', { method: 'POST' });
-                userIdInput.value = 1; // Скидаємо лічильник на фронті
+                userIdInput.value = 1;
                 fetchUsers();
             }
         });
+
+        fetchUsers();
     </script>
 </body>
 </html>
